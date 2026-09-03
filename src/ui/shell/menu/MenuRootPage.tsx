@@ -1,3 +1,9 @@
+import { useEffect, useState } from 'react';
+import {
+  canUseShizuku,
+  getShizukuStatus,
+  requestShizukuPermission
+} from '../../../native/shizuku';
 import type { MenuTokenUsageSummary } from '../../../app/shell/menuTokenUsage';
 import type { LocalDataHealthSnapshot } from '../../../infrastructure/localDataHealth';
 import { Icon } from '../../Icon';
@@ -66,6 +72,65 @@ export function MenuRootPage({
   const appLanguage = useSpaceStore((state) => state.appLanguage);
   const setAppLanguage = useSpaceStore((state) => state.setAppLanguage);
   const languageLabel = APP_LANGUAGE_LABELS[appLanguage];
+    const [shizukuStatus, setShizukuStatus] = useState<{
+    running: boolean;
+    granted: boolean;
+  } | null>(null);
+
+  const [shizukuBusy, setShizukuBusy] = useState(false);
+  const [shizukuError, setShizukuError] = useState('');
+
+  const refreshShizuku = async () => {
+    if (!canUseShizuku()) return;
+
+    setShizukuBusy(true);
+    setShizukuError('');
+
+    try {
+      const status = await getShizukuStatus();
+      setShizukuStatus(status);
+    } catch (error) {
+      setShizukuError(
+        error instanceof Error ? error.message : String(error)
+      );
+    } finally {
+      setShizukuBusy(false);
+    }
+  };
+
+  const requestShizuku = async () => {
+    setShizukuBusy(true);
+    setShizukuError('');
+
+    try {
+      const status = await requestShizukuPermission();
+      setShizukuStatus(status);
+    } catch (error) {
+      setShizukuError(
+        error instanceof Error ? error.message : String(error)
+      );
+    } finally {
+      setShizukuBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshShizuku();
+  }, []);
+
+  const shizukuDetail = !canUseShizuku()
+    ? '仅 Android App 可用'
+    : shizukuError
+      ? `检测失败：${shizukuError}`
+      : shizukuBusy && !shizukuStatus
+        ? '正在检测…'
+        : !shizukuStatus
+          ? '尚未检测'
+          : !shizukuStatus.running
+            ? 'Shizuku 未运行'
+            : shizukuStatus.granted
+              ? 'Shizuku 已运行 · Polaris 已授权'
+              : 'Shizuku 已运行 · Polaris 未授权';
   const setLanguage = (nextLanguage: AppLanguage) => {
     setAppLanguage(nextLanguage);
   };
@@ -143,6 +208,43 @@ export function MenuRootPage({
         <div className="menu-section-head">
           <span className="menu-section-kicker">{t('settings.section.capabilities')}</span>
         </div>
+                {canUseShizuku() ? (
+          <div className="settings-item">
+            <span className="settings-item-leading">
+              <span className="settings-item-icon">
+                <Icon name="lighthouse" size={14} />
+              </span>
+
+              <span className="settings-item-copy">
+                <strong>Shizuku</strong>
+                <small>{shizukuDetail}</small>
+              </span>
+            </span>
+
+            <button
+              type="button"
+              className="theme-inline-action"
+              disabled={shizukuBusy}
+              onClick={() => {
+                if (
+                  shizukuStatus?.running &&
+                  !shizukuStatus.granted
+                ) {
+                  void requestShizuku();
+                } else {
+                  void refreshShizuku();
+                }
+              }}
+            >
+              {shizukuBusy
+                ? '检测中…'
+                : shizukuStatus?.running &&
+                    !shizukuStatus.granted
+                  ? '申请授权'
+                  : '重新检测'}
+            </button>
+          </div>
+        ) : null}
         {memorySettingsVisible ? (
           <MenuSheetItem
             icon="feather"
