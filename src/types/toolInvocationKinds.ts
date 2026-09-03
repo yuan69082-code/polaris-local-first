@@ -83,6 +83,7 @@ export const TOOL_INVOCATION_KINDS = [
   'saveAttachmentToCollection',
   'saveAttachmentAsCodeCard',
   'saveArchiveEntryAsCodeCard',
+  'runAndroidShell',
   'runCode',
   'listDesktopWorkspaces',
   'listDesktopFiles',
