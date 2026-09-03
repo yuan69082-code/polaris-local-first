@@ -22,6 +22,7 @@ import rikka.shizuku.Shizuku;
 public class ShizukuBridgePlugin extends Plugin {
 
     private static final int REQUEST_CODE = 1001;
+    private static final int SHELL_SERVICE_VERSION = 2;
     private static final long SHELL_BIND_TIMEOUT_MS = 8000L;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -144,7 +145,7 @@ public class ShizukuBridgePlugin extends Plugin {
                 .daemon(false)
                 .processNameSuffix("service")
                 .debuggable(true)
-                .version(1);
+                .version(SHELL_SERVICE_VERSION);
     }
 
     @Override
