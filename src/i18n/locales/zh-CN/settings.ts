@@ -142,6 +142,8 @@ export const settings = {
   'settings.toolbox.group.project.detail': '内部场景开关：进入工作区后自动使用文件工具，不作为普通对话里的常驻工具展示。',
   'settings.toolbox.group.desktop.label': '本机',
   'settings.toolbox.group.desktop.detail': '让官网 Mac 桌面版协作者使用你授权的本机文件夹和需要逐次确认的命令行。',
+  'settings.toolbox.group.device.label': '手机控制',
+  'settings.toolbox.group.device.detail': 'Android 专用。开启后，协作者可以通过已授权的 Shizuku 以 shell 身份执行手机命令；默认关闭。',
   'settings.toolbox.group.theme.label': '换肤',
   'settings.toolbox.group.theme.detail': '让协作者能试穿、精修和回滚界面换肤。',
   'settings.toolbox.group.attachment.label': '附件',
