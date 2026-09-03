@@ -63,30 +63,6 @@ public class ShizukuBridgePlugin extends Plugin {
         }
     };
 
-    private final Runnable shellBindTimeout = () -> {
-        if (!shellBinding || pendingShellConnectCall == null) {
-            return;
-        }
-
-        PluginCall call = pendingShellConnectCall;
-        pendingShellConnectCall = null;
-        shellBinding = false;
-        shellService = null;
-
-        try {
-            if (Shizuku.pingBinder() && shellServiceArgs != null) {
-                Shizuku.unbindUserService(
-                        shellServiceArgs,
-                        shellConnection,
-                        true
-                );
-            }
-        } catch (Throwable ignored) {
-        }
-
-        call.reject("Shizuku Shell 连接超时，请重试");
-    };
-
     private final ServiceConnection shellConnection =
             new ServiceConnection() {
                 @Override
@@ -130,6 +106,30 @@ public class ShizukuBridgePlugin extends Plugin {
                 }
             };
 
+    private final Runnable shellBindTimeout = () -> {
+        if (!shellBinding || pendingShellConnectCall == null) {
+            return;
+        }
+
+        PluginCall call = pendingShellConnectCall;
+        pendingShellConnectCall = null;
+        shellBinding = false;
+        shellService = null;
+
+        try {
+            if (Shizuku.pingBinder() && shellServiceArgs != null) {
+                Shizuku.unbindUserService(
+                        shellServiceArgs,
+                        shellConnection,
+                        true
+                );
+            }
+        } catch (Throwable ignored) {
+        }
+
+        call.reject("Shizuku Shell 连接超时，请重试");
+    };
+
     @Override
     public void load() {
         Shizuku.addRequestPermissionResultListener(permissionListener);
@@ -137,14 +137,14 @@ public class ShizukuBridgePlugin extends Plugin {
 
         shellServiceArgs = new Shizuku.UserServiceArgs(
                 new ComponentName(
-                        BuildConfig.APPLICATION_ID,
+                        getContext().getPackageName(),
                         ShellUserService.class.getName()
                 )
         )
                 .daemon(false)
                 .processNameSuffix("service")
-                .debuggable(BuildConfig.DEBUG)
-                .version(BuildConfig.VERSION_CODE);
+                .debuggable(true)
+                .version(1);
     }
 
     @Override
