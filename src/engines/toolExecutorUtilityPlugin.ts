@@ -20,6 +20,7 @@ export type UtilityToolAction = Extract<
   ToolAction,
   {
     kind:
+      | 'runAndroidShell'
       | 'runCode'
       | 'listDesktopWorkspaces'
       | 'listDesktopFiles'
@@ -310,6 +311,8 @@ async function executeUtilityToolAction(
       return ctx.updateProactiveMessageRule(action);
     case 'deleteProactiveMessageRule':
       return ctx.deleteProactiveMessageRule(action);
+    case 'runAndroidShell':
+      return ctx.runAndroidShell(action.command);
     case 'runCode': {
       const result = await ctx.runCode(action.code);
       const logText = result.logs
