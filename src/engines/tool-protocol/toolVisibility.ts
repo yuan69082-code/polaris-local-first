@@ -39,6 +39,7 @@ export type PolarisToolVisibilityContext = Partial<Pick<
   | 'attachmentSnapshot'
   | 'imageAssetSnapshot'
   | 'desktopLocalHost'
+  | 'androidDeviceShell'
   | 'personalData'
 >> & {
   activeProjectId?: string | null;
@@ -114,6 +115,10 @@ function hasAvailableArchiveAttachment(context?: PolarisToolVisibilityContext) {
 function hasAvailableDesktopLocalHost(context?: PolarisToolVisibilityContext) {
   const host = context?.desktopLocalHost;
   return Boolean(host?.available && host.trustedRoots.length > 0);
+}
+
+function hasAvailableAndroidDeviceShell(context?: PolarisToolVisibilityContext) {
+  return context?.androidDeviceShell?.available === true;
 }
 
 function hasAvailableImageGeneration(context?: PolarisToolVisibilityContext) {
@@ -200,6 +205,9 @@ export function isPolarisNativeToolVisible(
   if (tool.group === 'desktop' && !hasAvailableDesktopLocalHost(context)) {
     return false;
   }
+  if (tool.group === 'device' && !hasAvailableAndroidDeviceShell(context)) {
+    return false;
+  }
   if (tool.name === 'generateImage' && !hasAvailableImageGeneration(context)) {
     return false;
   }
@@ -225,7 +233,7 @@ export function isParsedAssistantActionVisible(args: {
   context?: Pick<
     PolarisToolVisibilityContext,
     'activeProject' | 'activeProjectId' | 'enabledToolGroups' | 'themeToolMode' | 'toolEnforcementScope'
-    | 'desktopLocalHost' | 'imageGenerationAvailable' | 'memorySearchAvailable' | 'attachmentSnapshot'
+    | 'desktopLocalHost' | 'androidDeviceShell' | 'imageGenerationAvailable' | 'memorySearchAvailable' | 'attachmentSnapshot'
     | 'imageAssetSnapshot' | 'personalData'
   >;
 }) {
@@ -246,6 +254,11 @@ export function isParsedAssistantActionVisible(args: {
     return matchesThemeMode(tool, visibilityState)
       && isEnabledByPreferences(tool, visibilityState)
       && hasAvailableDesktopLocalHost(context);
+  }
+  if (tool.group === 'device') {
+    return matchesThemeMode(tool, visibilityState)
+      && isEnabledByPreferences(tool, visibilityState)
+      && hasAvailableAndroidDeviceShell(context);
   }
   if (tool.name === 'generateImage' && !hasAvailableImageGeneration(context)) {
     return false;
