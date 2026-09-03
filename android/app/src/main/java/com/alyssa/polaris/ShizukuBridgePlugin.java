@@ -3,7 +3,9 @@ package com.alyssa.polaris;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -20,6 +22,9 @@ import rikka.shizuku.Shizuku;
 public class ShizukuBridgePlugin extends Plugin {
 
     private static final int REQUEST_CODE = 1001;
+    private static final long SHELL_BIND_TIMEOUT_MS = 8000L;
+
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private PluginCall pendingPermissionCall;
     private PluginCall pendingShellConnectCall;
@@ -47,6 +52,41 @@ public class ShizukuBridgePlugin extends Plugin {
                 pendingPermissionCall = null;
             };
 
+    private final Shizuku.OnBinderDeadListener binderDeadListener = () -> {
+        cancelShellBindTimeout();
+        shellService = null;
+        shellBinding = false;
+
+        if (pendingShellConnectCall != null) {
+            pendingShellConnectCall.reject("Shizuku 服务已断开");
+            pendingShellConnectCall = null;
+        }
+    };
+
+    private final Runnable shellBindTimeout = () -> {
+        if (!shellBinding || pendingShellConnectCall == null) {
+            return;
+        }
+
+        PluginCall call = pendingShellConnectCall;
+        pendingShellConnectCall = null;
+        shellBinding = false;
+        shellService = null;
+
+        try {
+            if (Shizuku.pingBinder() && shellServiceArgs != null) {
+                Shizuku.unbindUserService(
+                        shellServiceArgs,
+                        shellConnection,
+                        true
+                );
+            }
+        } catch (Throwable ignored) {
+        }
+
+        call.reject("Shizuku Shell 连接超时，请重试");
+    };
+
     private final ServiceConnection shellConnection =
             new ServiceConnection() {
                 @Override
@@ -54,6 +94,19 @@ public class ShizukuBridgePlugin extends Plugin {
                         ComponentName name,
                         IBinder service
                 ) {
+                    cancelShellBindTimeout();
+
+                    if (service == null || !service.pingBinder()) {
+                        shellService = null;
+                        shellBinding = false;
+
+                        if (pendingShellConnectCall != null) {
+                            pendingShellConnectCall.reject("Shizuku Shell 返回了无效 Binder");
+                            pendingShellConnectCall = null;
+                        }
+                        return;
+                    }
+
                     shellService = IShellService.Stub.asInterface(service);
                     shellBinding = false;
 
@@ -66,6 +119,7 @@ public class ShizukuBridgePlugin extends Plugin {
 
                 @Override
                 public void onServiceDisconnected(ComponentName name) {
+                    cancelShellBindTimeout();
                     shellService = null;
                     shellBinding = false;
 
@@ -79,19 +133,25 @@ public class ShizukuBridgePlugin extends Plugin {
     @Override
     public void load() {
         Shizuku.addRequestPermissionResultListener(permissionListener);
+        Shizuku.addBinderDeadListener(binderDeadListener);
 
         shellServiceArgs = new Shizuku.UserServiceArgs(
-                new ComponentName(getContext(), ShellUserService.class)
+                new ComponentName(
+                        BuildConfig.APPLICATION_ID,
+                        ShellUserService.class.getName()
+                )
         )
-                .processNameSuffix("polaris_shell")
-                .tag("polaris-shell")
-                .version(1)
-                .daemon(false);
+                .daemon(false)
+                .processNameSuffix("service")
+                .debuggable(BuildConfig.DEBUG)
+                .version(BuildConfig.VERSION_CODE);
     }
 
     @Override
     protected void handleOnDestroy() {
         Shizuku.removeRequestPermissionResultListener(permissionListener);
+        Shizuku.removeBinderDeadListener(binderDeadListener);
+        cancelShellBindTimeout();
 
         if (pendingPermissionCall != null) {
             pendingPermissionCall.reject("Polaris 已关闭");
@@ -183,6 +243,11 @@ public class ShizukuBridgePlugin extends Plugin {
             return;
         }
 
+        if (Shizuku.getVersion() < 10) {
+            call.reject("当前 Shizuku 版本不支持 UserService");
+            return;
+        }
+
         if (Shizuku.checkSelfPermission()
                 != PackageManager.PERMISSION_GRANTED) {
             call.reject("Polaris 尚未获得 Shizuku 权限");
@@ -196,7 +261,7 @@ public class ShizukuBridgePlugin extends Plugin {
         }
 
         if (shellBinding || pendingShellConnectCall != null) {
-            call.reject("Shizuku Shell 正在连接");
+            call.reject("Shizuku Shell 正在连接，请稍候");
             return;
         }
 
@@ -207,6 +272,7 @@ public class ShizukuBridgePlugin extends Plugin {
 
         shellBinding = true;
         pendingShellConnectCall = call;
+        mainHandler.postDelayed(shellBindTimeout, SHELL_BIND_TIMEOUT_MS);
 
         try {
             Shizuku.bindUserService(
@@ -214,6 +280,7 @@ public class ShizukuBridgePlugin extends Plugin {
                     shellConnection
             );
         } catch (Throwable error) {
+            cancelShellBindTimeout();
             shellBinding = false;
             pendingShellConnectCall = null;
             call.reject("连接 Shizuku Shell 失败：" + message(error));
@@ -274,6 +341,10 @@ public class ShizukuBridgePlugin extends Plugin {
                 call.reject("Shell 执行失败：" + message(error));
             }
         });
+    }
+
+    private void cancelShellBindTimeout() {
+        mainHandler.removeCallbacks(shellBindTimeout);
     }
 
     private JSObject buildShellStatus() {
