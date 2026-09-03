@@ -312,6 +312,9 @@ async function executeUtilityToolAction(
     case 'deleteProactiveMessageRule':
       return ctx.deleteProactiveMessageRule(action);
     case 'runAndroidShell':
+      if (!ctx.runAndroidShell) {
+        return { ok: false, error: '当前环境不能执行 Android Shell。' };
+      }
       return ctx.runAndroidShell(action.command);
     case 'runCode': {
       const result = await ctx.runCode(action.code);
