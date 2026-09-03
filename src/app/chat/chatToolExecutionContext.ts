@@ -31,6 +31,11 @@ import {
   getAssetMeta
 } from '../../infrastructure/assetStore';
 import {
+  canUseShizuku,
+  connectShizukuShell,
+  execShizukuShell
+} from '../../native/shizuku';
+import {
   createNativeCalendarEvent,
   deleteNativeCalendarEvent,
   listNativeCalendars,
@@ -448,6 +453,47 @@ export function buildDirectToolExecutionContext({
         created: saveResult.created,
         title: saveResult.title
       };
+    },
+    runAndroidShell: async (command) => {
+      if (!canUseShizuku()) {
+        return { ok: false, error: '当前不是可用 Shizuku 的 Android App。' };
+      }
+
+      try {
+        const status = await connectShizukuShell();
+        if (!status.running) {
+          return { ok: false, error: 'Shizuku 未运行。' };
+        }
+        if (!status.granted) {
+          return { ok: false, error: 'Polaris 尚未获得 Shizuku 权限。' };
+        }
+        if (!status.shellConnected) {
+          return { ok: false, error: 'Shizuku Shell 未连接。' };
+        }
+
+        const result = await execShizukuShell(command);
+        const detailText = [
+          `$ ${command}`,
+          `uid=${result.uid} · exit=${result.exitCode}`,
+          result.stdout ? `--- stdout ---\n${result.stdout}` : null,
+          result.stderr ? `--- stderr ---\n${result.stderr}` : null
+        ].filter(Boolean).join('\n');
+
+        if (result.exitCode !== 0) {
+          return { ok: false, error: detailText };
+        }
+
+        return {
+          ok: true,
+          summary: `手机 Shell 已完成 · ${command.slice(0, 80)}`,
+          detailText
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : '手机 Shell 执行失败。'
+        };
+      }
     },
     runCode: async (code) => {
       await prewarmRunCodeSandbox();

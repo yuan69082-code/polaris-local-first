@@ -428,6 +428,11 @@ export type CanonicalToolAction =
       targetLabel?: string;
     }
   | {
+      kind: 'runAndroidShell';
+      command: string;
+      targetLabel?: string;
+    }
+  | {
       kind: 'runCode';
       code: string;
       targetLabel?: string;

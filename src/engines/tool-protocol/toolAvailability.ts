@@ -58,7 +58,7 @@ export function isPolarisToolGroupEnabled(
   if (!isPolarisToolGroupAllowedByScope(group, enforcementScope)) {
     return false;
   }
-  if (group === 'memoryWrite' || group === 'proactive' || group === 'personalData') {
+  if (group === 'memoryWrite' || group === 'proactive' || group === 'personalData' || group === 'device') {
     return preferences?.[group] === true;
   }
   if (group === 'knowledge') {

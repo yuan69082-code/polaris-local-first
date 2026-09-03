@@ -144,6 +144,8 @@ export const settings = {
   'settings.toolbox.group.project.detail': 'Workspace-only switch. File tools turn on automatically inside a workspace and are not shown as normal chat tools.',
   'settings.toolbox.group.desktop.label': 'Mac local',
   'settings.toolbox.group.desktop.detail': 'Let collaborators in the official Mac app use folders you have approved and terminal commands that require confirmation.',
+  'settings.toolbox.group.device.label': 'Android control',
+  'settings.toolbox.group.device.detail': 'Android only. When enabled, collaborators can use the Shizuku permission you granted to run shell commands on this phone. Off by default.',
   'settings.toolbox.group.theme.label': 'Themes',
   'settings.toolbox.group.theme.detail': 'Let collaborators preview, refine, and roll back interface themes.',
   'settings.toolbox.group.attachment.label': 'Attachments',

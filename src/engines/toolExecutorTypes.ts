@@ -241,6 +241,7 @@ export type ToolContext = {
     tags?: string[],
     openInCollection?: boolean
   ) => Promise<SaveAttachmentAsCodeCardResult>;
+  runAndroidShell?: (command: string) => Promise<ToolExecutionResult>;
   runCode: (code: string) => Promise<CodeSandboxResult>;
   activeProjectId?: string | null;
   syncDesktopWorkspaceFromDisk?: (input: {

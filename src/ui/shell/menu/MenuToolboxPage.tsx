@@ -72,6 +72,11 @@ const TOOLBOX_TOGGLE_META: Record<PolarisToolPromptGroup, { icon: IconName; labe
     labelKey: 'settings.toolbox.group.desktop.label',
     descriptionKey: 'settings.toolbox.group.desktop.detail'
   },
+  device: {
+    icon: 'lighthouse',
+    labelKey: 'settings.toolbox.group.device.label',
+    descriptionKey: 'settings.toolbox.group.device.detail'
+  },
   theme: {
     icon: 'brush',
     labelKey: 'settings.toolbox.group.theme.label',

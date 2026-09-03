@@ -5,6 +5,7 @@ export type DesktopToolAction = Extract<
   ToolAction,
   {
     kind:
+      | 'runAndroidShell'
       | 'editDesktopFileText'
       | 'searchDesktopFiles'
       | 'readDesktopFileContext'
@@ -35,6 +36,13 @@ export type DesktopToolAction = Extract<
  */
 export function describeDesktopToolAction(action: DesktopToolAction): ToolActionDescription {
   switch (action.kind) {
+    case 'runAndroidShell':
+      return {
+        kind: action.kind,
+        title: '运行手机 Shell',
+        summary: `运行手机 Shell · ${action.targetLabel || action.command}`,
+        targetLabel: action.targetLabel ?? action.command
+      };
     case 'editDesktopFileText':
       return {
         kind: action.kind,

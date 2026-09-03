@@ -151,6 +151,7 @@ export function describeToolAction(action: ToolAction): ToolActionDescription {
     case 'saveArchiveEntryAsCodeCard':
     case 'runCode':
       return describeAttachmentsToolAction(action);
+    case 'runAndroidShell':
     case 'listDesktopWorkspaces':
     case 'listDesktopFiles':
     case 'readDesktopFile':

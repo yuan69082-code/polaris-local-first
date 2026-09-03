@@ -10,6 +10,7 @@ export type PolarisRegistryToolGroup =
   | 'cross-boundary'
   | 'project'
   | 'desktop'
+  | 'device'
   | 'mcp'
   | 'task'
   | 'theme-stable'

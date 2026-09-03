@@ -10,7 +10,7 @@ import {
 
 type UtilityToolKind = Extract<
   AssistantToolActionKind,
-  'listEnvironmentNodes' | 'inspectEnvironmentNode' | 'searchEnvironmentNodes' | 'createQrCode' | 'webSearch' | 'readWebPage' | 'listCalendars' | 'readCalendarEvents' | 'createCalendarEvent' | 'updateCalendarEvent' | 'deleteCalendarEvent' | 'runCode' | 'writeMemory' | 'writeMemoryDoc' | 'readMemoryDoc' | 'searchMemory' | 'openMemorySource' | 'readPolarisKnowledge' | 'startTask' | 'completeTask' | 'wait' | 'createProactiveMessageRule' | 'listProactiveMessageRules' | 'updateProactiveMessageRule' | 'deleteProactiveMessageRule'
+  'listEnvironmentNodes' | 'inspectEnvironmentNode' | 'searchEnvironmentNodes' | 'runAndroidShell' | 'createQrCode' | 'webSearch' | 'readWebPage' | 'listCalendars' | 'readCalendarEvents' | 'createCalendarEvent' | 'updateCalendarEvent' | 'deleteCalendarEvent' | 'runCode' | 'writeMemory' | 'writeMemoryDoc' | 'readMemoryDoc' | 'searchMemory' | 'openMemorySource' | 'readPolarisKnowledge' | 'startTask' | 'completeTask' | 'wait' | 'createProactiveMessageRule' | 'listProactiveMessageRules' | 'updateProactiveMessageRule' | 'deleteProactiveMessageRule'
 >;
 
 const PROACTIVE_MESSAGE_RULES = [
@@ -284,6 +284,28 @@ export const UTILITY_TOOL_DEFINITION_MAP = {
       '5. deleteCalendarEvent：删除已有系统日历事件。',
       '- 删除已有日程前必须知道 eventId；不知道时先用 readCalendarEvents 定位。',
       '- 不要删除不确定是不是用户目标的事件；同名或时间相近时先读日历确认。'
+    ]
+  },
+  runAndroidShell: {
+    name: 'runAndroidShell',
+    group: 'device',
+    resultReplayMode: 'detail-excerpt',
+    brief: '通过 Shizuku 在 Android 手机上执行 shell 命令',
+    schema: {
+      name: 'runAndroidShell',
+      description: '在当前 Android 设备上通过 Shizuku 以 shell 身份执行一条命令，并返回 exit code、stdout 和 stderr。只有用户主动打开“手机控制”工具组后才可用。',
+      parameters: objectParameters({
+        command: stringProperty('要执行的 Android shell 命令。'),
+        targetLabel: stringProperty('可选目标说明。')
+      }, ['command'])
+    },
+    rules: [
+      'Android 手机控制：',
+      '1. runAndroidShell：通过 Shizuku 以 shell 身份执行一条 Android shell 命令。',
+      '- 只有用户明确要求你操作、检查或控制当前手机时才使用；普通聊天不要自行执行手机命令。',
+      '- 这是现实设备副作用工具。不要把命令执行计划写成已完成；必须以工具返回的 exit/stdout/stderr 为准。',
+      '- 当前权限通常是 Android shell UID 2000，不等于 root；命令能否成功取决于系统、ROM 和 Shizuku 权限。',
+      '- 当前阶段还没有通用文件沙箱；不要为了试探而执行删除、清空数据、卸载应用、恢复出厂、重启或其他不可逆命令。'
     ]
   },
   runCode: {
