@@ -456,7 +456,9 @@ public class ShizukuBridgePlugin extends Plugin {
         Future<String> stderrFuture =
                 workers.submit(() -> readLimited(process.getErrorStream()));
         Future<Integer> exitFuture =
-                workers.submit(process::waitFor);
+                workers.submit(
+                        (java.util.concurrent.Callable<Integer>) process::waitFor
+                );
 
         try {
             final int exitCode;
