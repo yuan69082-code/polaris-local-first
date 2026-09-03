@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import rikka.shizuku.Shizuku;
 
@@ -449,20 +450,22 @@ public class ShizukuBridgePlugin extends Plugin {
                 }
         );
 
-        ExecutorService readers = Executors.newFixedThreadPool(2);
+        ExecutorService workers = Executors.newFixedThreadPool(3);
         Future<String> stdoutFuture =
-                readers.submit(() -> readLimited(process.getInputStream()));
+                workers.submit(() -> readLimited(process.getInputStream()));
         Future<String> stderrFuture =
-                readers.submit(() -> readLimited(process.getErrorStream()));
+                workers.submit(() -> readLimited(process.getErrorStream()));
+        Future<Integer> exitFuture =
+                workers.submit(process::waitFor);
 
         try {
-            boolean finished =
-                    process.waitFor(
-                            COMMAND_TIMEOUT_SECONDS,
-                            TimeUnit.SECONDS
-                    );
-
-            if (!finished) {
+            final int exitCode;
+            try {
+                exitCode = exitFuture.get(
+                        COMMAND_TIMEOUT_SECONDS,
+                        TimeUnit.SECONDS
+                );
+            } catch (TimeoutException error) {
                 process.destroy();
                 return new ShellExecResult(
                         124,
@@ -472,12 +475,12 @@ public class ShizukuBridgePlugin extends Plugin {
             }
 
             return new ShellExecResult(
-                    process.exitValue(),
+                    exitCode,
                     readFuture(stdoutFuture),
                     readFuture(stderrFuture)
             );
         } finally {
-            readers.shutdownNow();
+            workers.shutdownNow();
             try {
                 process.destroy();
             } catch (Throwable ignored) {
