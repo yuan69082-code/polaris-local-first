@@ -82,6 +82,7 @@ const TOOL_ICON_NAME_BY_KIND = {
   saveAttachmentToCollection: 'inbox',
   saveAttachmentAsCodeCard: 'navCard',
   saveArchiveEntryAsCodeCard: 'navCard',
+  runAndroidShell: 'lighthouse',
   runCode: 'zap',
   listDesktopWorkspaces: 'folder',
   listDesktopFiles: 'folder',
