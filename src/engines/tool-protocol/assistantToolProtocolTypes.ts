@@ -56,6 +56,7 @@ export type PolarisToolPromptGroup =
   | 'room'
   | 'project'
   | 'desktop'
+  | 'device'
   | 'theme'
   | 'attachment'
   | 'generation'
@@ -154,6 +155,11 @@ export type AssistantToolContext = {
       path: string;
       lastUsedAt: number | null;
     }>;
+  };
+  androidDeviceShell?: {
+    available: boolean;
+    uid?: number;
+    mode?: string;
   };
   personalData?: {
     calendarAvailable: boolean;
