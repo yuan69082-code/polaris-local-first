@@ -493,6 +493,15 @@ export function parseContentToolAction(
         targetLabel: normalizeOptionalString(action.targetLabel)
       } };
     }
+    case 'runAndroidShell': {
+      const command = normalizeOptionalString(action.command);
+      if (!command) return { action: null, issue: '手机 Shell 动作缺少 command。' };
+      return { action: {
+        kind: 'runAndroidShell',
+        command,
+        targetLabel: normalizeOptionalString(action.targetLabel)
+      } };
+    }
     case 'runCode': {
       const code =
         typeof action.code === 'string'
