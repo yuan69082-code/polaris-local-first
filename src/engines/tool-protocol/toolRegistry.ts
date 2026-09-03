@@ -46,6 +46,7 @@ export type ToolResolutionSource = Partial<Pick<
   | 'attachmentSnapshot'
   | 'imageAssetSnapshot'
   | 'desktopLocalHost'
+  | 'androidDeviceShell'
   | 'personalData'
   | 'mcpTools'
 >>;
