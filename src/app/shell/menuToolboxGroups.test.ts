@@ -11,6 +11,7 @@ const allEnabled = {
   room: true,
   project: false,
   desktop: true,
+  device: true,
   theme: true,
   attachment: true,
   generation: true,
