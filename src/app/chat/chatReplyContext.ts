@@ -9,6 +9,7 @@ import { isGroupConversation } from '../../engines/conversationOwnership';
 import { buildRoomProjectTreeSnapshots } from '../../engines/roomProjects';
 import { getRunCodeSandboxProfile } from '../../infrastructure/runCodeSandboxMode';
 import { getNativePersonalDataToolAvailability } from '../../native/personalData';
+import { canUseShizuku } from '../../native/shizuku';
 import type {
   ChatAttachment,
   ChatMessage,
@@ -334,6 +335,9 @@ export function buildReplyToolContext(args: {
       imageAssetSnapshot: buildImageAssetSnapshot(visibleImageCards),
       imageGenerationAvailable,
       memorySearchAvailable,
+      androidDeviceShell: {
+        available: canUseShizuku()
+      },
       personalData: {
         calendarAvailable: personalDataAvailability.calendarAvailable,
         calendarWriteAvailable: personalDataAvailability.calendarWriteAvailable,
