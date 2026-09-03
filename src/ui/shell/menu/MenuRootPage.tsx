@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   canUseShizuku,
+  connectShizukuShell,
+  execShizukuShell,
   getShizukuStatus,
   requestShizukuPermission
 } from '../../../native/shizuku';
@@ -72,19 +74,21 @@ export function MenuRootPage({
   const appLanguage = useSpaceStore((state) => state.appLanguage);
   const setAppLanguage = useSpaceStore((state) => state.setAppLanguage);
   const languageLabel = APP_LANGUAGE_LABELS[appLanguage];
-    const [shizukuStatus, setShizukuStatus] = useState<{
+  const [shizukuStatus, setShizukuStatus] = useState<{
     running: boolean;
     granted: boolean;
   } | null>(null);
 
   const [shizukuBusy, setShizukuBusy] = useState(false);
   const [shizukuError, setShizukuError] = useState('');
+  const [shellTestMessage, setShellTestMessage] = useState('');
 
   const refreshShizuku = async () => {
     if (!canUseShizuku()) return;
 
     setShizukuBusy(true);
     setShizukuError('');
+    setShellTestMessage('');
 
     try {
       const status = await getShizukuStatus();
@@ -101,10 +105,46 @@ export function MenuRootPage({
   const requestShizuku = async () => {
     setShizukuBusy(true);
     setShizukuError('');
+    setShellTestMessage('');
 
     try {
       const status = await requestShizukuPermission();
       setShizukuStatus(status);
+    } catch (error) {
+      setShizukuError(
+        error instanceof Error ? error.message : String(error)
+      );
+    } finally {
+      setShizukuBusy(false);
+    }
+  };
+
+  const testShizukuShell = async () => {
+    setShizukuBusy(true);
+    setShizukuError('');
+    setShellTestMessage('');
+
+    try {
+      const connected = await connectShizukuShell();
+      if (!connected.shellConnected) {
+        throw new Error('Shizuku Shell 连接失败');
+      }
+
+      const result = await execShizukuShell('id');
+      if (result.exitCode !== 0) {
+        throw new Error(
+          result.stderr.trim() || `Shell 返回 exit ${result.exitCode}`
+        );
+      }
+
+      const identity = result.stdout
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, 120);
+
+      setShellTestMessage(
+        `Shell 可用 · UID ${result.uid}${identity ? ` · ${identity}` : ''}`
+      );
     } catch (error) {
       setShizukuError(
         error instanceof Error ? error.message : String(error)
@@ -122,7 +162,9 @@ export function MenuRootPage({
     ? '仅 Android App 可用'
     : shizukuError
       ? `检测失败：${shizukuError}`
-      : shizukuBusy && !shizukuStatus
+      : shellTestMessage
+        ? shellTestMessage
+        : shizukuBusy && !shizukuStatus
         ? '正在检测…'
         : !shizukuStatus
           ? '尚未检测'
@@ -228,6 +270,11 @@ export function MenuRootPage({
               onClick={() => {
                 if (
                   shizukuStatus?.running &&
+                  shizukuStatus.granted
+                ) {
+                  void testShizukuShell();
+                } else if (
+                  shizukuStatus?.running &&
                   !shizukuStatus.granted
                 ) {
                   void requestShizuku();
@@ -237,11 +284,14 @@ export function MenuRootPage({
               }}
             >
               {shizukuBusy
-                ? '检测中…'
+                ? '处理中…'
                 : shizukuStatus?.running &&
-                    !shizukuStatus.granted
-                  ? '申请授权'
-                  : '重新检测'}
+                    shizukuStatus.granted
+                  ? '测试 Shell'
+                  : shizukuStatus?.running &&
+                      !shizukuStatus.granted
+                    ? '申请授权'
+                    : '重新检测'}
             </button>
           </div>
         ) : null}
